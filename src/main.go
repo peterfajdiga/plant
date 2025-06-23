@@ -11,10 +11,17 @@ import (
 
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
+	lastIndentation := 0
 	for scanner.Scan() {
 		coloredLine := scanner.Text()
-		rawLine := stripansi.Strip(coloredLine)
-		indentation := getIndentation(rawLine)
+		var indentation int
+		if coloredLine == "" {
+			indentation = lastIndentation
+		} else {
+			rawLine := stripansi.Strip(coloredLine)
+			indentation = getIndentation(rawLine)
+			lastIndentation = indentation
+		}
 		fmt.Println(indentation, coloredLine)
 	}
 	if err := scanner.Err(); err != nil {
