@@ -38,7 +38,7 @@ func main() {
 			parentStack.Drop(-indentationDelta + 1)
 		}
 
-		node := tview.NewTreeNode(coloredLine)
+		node := tview.NewTreeNode(ansiColorToTview(coloredLine))
 		if parent, ok := parentStack.Peek(); ok {
 			parent.AddChild(node)
 		} else {
@@ -84,4 +84,30 @@ func matchedPrefixLen(str string) int {
 		}
 	}
 	return 0
+}
+
+func ansiColorToTview(line string) string {
+	replacer := strings.NewReplacer(
+		"\033[30m", "[black]",
+		"\033[31m", "[red]",
+		"\033[32m", "[green]",
+		"\033[33m", "[yellow]",
+		"\033[34m", "[blue]",
+		"\033[35m", "[magenta]",
+		"\033[36m", "[cyan]",
+		"\033[37m", "[white]",
+		"\033[90m", "[gray]",
+		"\033[91m", "[red]",
+		"\033[92m", "[green]",
+		"\033[93m", "[yellow]",
+		"\033[94m", "[blue]",
+		"\033[95m", "[magenta]",
+		"\033[96m", "[cyan]",
+		"\033[97m", "[white]",
+		"\033[1m", "[::b]", // bold
+		"\033[3m", "[::i]", // italic
+		"\033[4m", "[::u]", // underline
+		"\033[0m", "[-:-:-]", // reset all
+	)
+	return replacer.Replace(line)
 }
