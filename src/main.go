@@ -32,7 +32,7 @@ func main() {
 func getIndentation(line string) int {
 	spaces := countPrefixedSpaces(line)
 	spaces += matchedPrefixLen(line[spaces:])
-	return spaces
+	return spaces / 4
 }
 
 func countPrefixedSpaces(str string) int {
