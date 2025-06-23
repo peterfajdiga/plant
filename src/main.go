@@ -16,7 +16,8 @@ func main() {
 	root := tview.NewTreeNode("Root")
 	tree := tview.NewTreeView().
 		SetRoot(root).
-		SetCurrentNode(root)
+		SetCurrentNode(root).
+		SetGraphics(false)
 
 	scanner := bufio.NewScanner(os.Stdin)
 	lastIndentation := 0
