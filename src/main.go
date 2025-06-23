@@ -54,6 +54,7 @@ func main() {
 		return
 	}
 
+	markNodesWithChildren(root)
 	if err := app.SetRoot(tree, true).Run(); err != nil {
 		panic(err)
 	}
@@ -111,4 +112,15 @@ func ansiColorToTview(line string) string {
 		"\033[0m", "[-:-:-]", // reset all
 	)
 	return replacer.Replace(line)
+}
+
+func markNodesWithChildren(node *tview.TreeNode) {
+	if len(node.GetChildren()) > 0 {
+		node.SetText("> " + node.GetText())
+	} else {
+		node.SetText("  " + node.GetText())
+	}
+	for _, child := range node.GetChildren() {
+		markNodesWithChildren(child)
+	}
 }
