@@ -39,7 +39,7 @@ func main() {
 			parentStack.Drop(-indentationDelta + 1)
 		}
 
-		node := tview.NewTreeNode(ansiColorToTview(coloredLine))
+		node := tview.NewTreeNode(ansiColorToTview(coloredLine)).Collapse()
 		if parent, ok := parentStack.Peek(); ok {
 			parent.AddChild(node)
 		} else {
