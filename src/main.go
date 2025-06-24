@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"iplan/stack"
 	"os"
 	"strings"
@@ -19,7 +20,18 @@ func main() {
 		SetCurrentNode(root).
 		SetGraphics(false)
 
-	scanner := bufio.NewScanner(os.Stdin)
+	if err := readTree(root, os.Stdin); err != nil {
+		panic(err)
+	}
+
+	markNodesWithChildren(root)
+	if err := app.SetRoot(tree, true).Run(); err != nil {
+		panic(err)
+	}
+}
+
+func readTree(root *tview.TreeNode, in io.Reader) error {
+	scanner := bufio.NewScanner(in)
 	lastIndentation := 0
 	parentStack := stack.New[*tview.TreeNode]()
 	for scanner.Scan() {
@@ -34,7 +46,7 @@ func main() {
 
 		indentationDelta := indentation - lastIndentation
 		if indentationDelta > 1 {
-			panic("indentation increased by " + fmt.Sprint(indentationDelta))
+			return fmt.Errorf("indentation increased by %d", indentationDelta)
 		} else if indentationDelta <= 0 {
 			parentStack.Drop(-indentationDelta + 1)
 		}
@@ -50,14 +62,10 @@ func main() {
 		lastIndentation = indentation
 	}
 	if err := scanner.Err(); err != nil {
-		fmt.Fprintln(os.Stderr, "error reading input:", err)
-		return
+		return err
 	}
 
-	markNodesWithChildren(root)
-	if err := app.SetRoot(tree, true).Run(); err != nil {
-		panic(err)
-	}
+	return nil
 }
 
 func getIndentation(line string) int {
