@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/acarl005/stripansi"
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
@@ -25,6 +26,8 @@ func main() {
 	}
 
 	markNodesWithChildren(root)
+	setupInputCapture(tree)
+
 	if err := app.SetRoot(tree, true).Run(); err != nil {
 		panic(err)
 	}
@@ -131,4 +134,24 @@ func markNodesWithChildren(node *tview.TreeNode) {
 	for _, child := range node.GetChildren() {
 		markNodesWithChildren(child)
 	}
+}
+
+func setupInputCapture(tree *tview.TreeView) {
+	tree.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		node := tree.GetCurrentNode()
+		if node == nil {
+			return event
+		}
+
+		switch event.Key() {
+		case tcell.KeyRight:
+			node.SetExpanded(true)
+			return nil
+		case tcell.KeyLeft:
+			node.SetExpanded(false)
+			return nil
+		default:
+			return event
+		}
+	})
 }
