@@ -13,6 +13,12 @@ import (
 	"github.com/rivo/tview"
 )
 
+const (
+	collapsedSymbol = ">"
+	expandedSymbol  = "v"
+	neutralSymbol   = "|"
+)
+
 func main() {
 	app := tview.NewApplication()
 	root := tview.NewTreeNode("Root")
@@ -127,9 +133,9 @@ func ansiColorToTview(line string) string {
 
 func markNodesWithChildren(node *tview.TreeNode) {
 	if len(node.GetChildren()) > 0 {
-		node.SetText("> " + node.GetText())
+		node.SetText(collapsedSymbol + " " + node.GetText())
 	} else {
-		node.SetText("  " + node.GetText())
+		node.SetText(neutralSymbol + " " + node.GetText())
 	}
 	for _, child := range node.GetChildren() {
 		markNodesWithChildren(child)
@@ -146,12 +152,26 @@ func setupInputCapture(tree *tview.TreeView) {
 		switch event.Key() {
 		case tcell.KeyRight:
 			node.SetExpanded(true)
+			replaceNodePrefix(node, expandedSymbol)
 			return nil
 		case tcell.KeyLeft:
 			node.SetExpanded(false)
+			replaceNodePrefix(node, collapsedSymbol)
 			return nil
 		default:
 			return event
 		}
 	})
+}
+
+func replaceNodePrefix(node *tview.TreeNode, newPrefix string) {
+	node.SetText(replacePrefix(node.GetText(), newPrefix))
+}
+
+func replacePrefix(str string, newPrefix string) string {
+	l := len(newPrefix)
+	if l > len(str) {
+		panic("prefix is longer than full string")
+	}
+	return newPrefix + str[l:]
 }
