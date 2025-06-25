@@ -16,7 +16,7 @@ import (
 func main() {
 	app := tview.NewApplication().
 		EnableMouse(true)
-	root := tview.NewTreeNode("Root")
+	root := tview.NewTreeNode("Terraform plan")
 	tree := tview.NewTreeView().
 		SetRoot(root).
 		SetCurrentNode(root).
