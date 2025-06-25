@@ -54,7 +54,9 @@ func readTree(root *tview.TreeNode, in io.Reader) error {
 		}
 
 		node := tview.NewTreeNode(ansiColorToTview(coloredLine)).Collapse()
-		parentStack.MustPeek().AddChild(node)
+		parent := parentStack.MustPeek()
+		parent.AddChild(node)
+		node.SetReference(parent)
 
 		if isOpener(rawLine) {
 			parentStack.Push(node)
@@ -133,10 +135,21 @@ func setupInputCapture(tree *tview.TreeView) {
 
 		switch event.Key() {
 		case tcell.KeyRight:
-			node.SetExpanded(true)
+			if node.IsExpanded() {
+				tree.Move(1)
+			} else {
+				node.SetExpanded(true)
+			}
 			return nil
 		case tcell.KeyLeft:
-			node.SetExpanded(false)
+			if node.IsExpanded() {
+				node.SetExpanded(false)
+			} else {
+				parent, ok := node.GetReference().(*tview.TreeNode)
+				if ok {
+					tree.SetCurrentNode(parent)
+				}
+			}
 			return nil
 		default:
 			return event
