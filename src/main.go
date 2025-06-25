@@ -26,6 +26,7 @@ func main() {
 		panic(err)
 	}
 
+	postProcess(root)
 	setupInputCapture(tree)
 
 	if err := app.SetRoot(tree, true).Run(); err != nil {
@@ -123,6 +124,13 @@ func ansiColorToTview(line string) string {
 		"\033[0m", "[-:-:-]", // reset all
 	)
 	return replacer.Replace(line)
+}
+
+func postProcess(node *tview.TreeNode) {
+	node.SetSelectable(len(node.GetChildren()) > 0)
+	for _, child := range node.GetChildren() {
+		postProcess(child)
+	}
 }
 
 func setupInputCapture(tree *tview.TreeView) {
