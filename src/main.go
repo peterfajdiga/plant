@@ -60,6 +60,7 @@ func readTree(root *tview.TreeNode, in io.Reader) error {
 
 		if isOpener(rawLine) {
 			parentStack.Push(node)
+			updateSuffix(node)
 		} else if isCloser(rawLine) {
 			parentStack.Pop()
 		}
@@ -139,11 +140,13 @@ func setupInputCapture(tree *tview.TreeView) {
 				tree.Move(1)
 			} else {
 				node.SetExpanded(true)
+				updateSuffix(node)
 			}
 			return nil
 		case tcell.KeyLeft:
 			if node.IsExpanded() {
 				node.SetExpanded(false)
+				updateSuffix(node)
 			} else {
 				parent, ok := node.GetReference().(*tview.TreeNode)
 				if ok {
@@ -158,5 +161,43 @@ func setupInputCapture(tree *tview.TreeView) {
 
 	tree.SetSelectedFunc(func(node *tview.TreeNode) {
 		node.SetExpanded(!node.IsExpanded())
+		updateSuffix(node)
 	})
+}
+
+func updateSuffix(node *tview.TreeNode) {
+	if node.IsExpanded() {
+		node.SetText(getExpandedText(node.GetText()))
+	} else {
+		node.SetText(getCollapsedText(node.GetText()))
+	}
+}
+
+func getCollapsedText(expandedText string) string {
+	if strings.HasSuffix(expandedText, "(") {
+		return expandedText + "...)"
+	} else if strings.HasSuffix(expandedText, "[") {
+		return expandedText + "...]"
+	} else if strings.HasSuffix(expandedText, "{") {
+		return expandedText + "...}"
+	} else {
+		return expandedText
+	}
+}
+
+func getExpandedText(collapsedText string) string {
+	collapsedSuffixes := []string{
+		"(...)",
+		"[...]",
+		"{...}",
+	}
+
+	for _, collapsedSuffix := range collapsedSuffixes {
+		if strings.HasSuffix(collapsedText, collapsedSuffix) {
+			cutLen := len(collapsedSuffix) - 1
+			return collapsedText[:len(collapsedText)-cutLen]
+		}
+	}
+
+	return collapsedText
 }
