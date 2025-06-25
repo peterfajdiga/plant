@@ -155,4 +155,8 @@ func setupInputCapture(tree *tview.TreeView) {
 			return event
 		}
 	})
+
+	tree.SetSelectedFunc(func(node *tview.TreeNode) {
+		node.SetExpanded(!node.IsExpanded())
+	})
 }
