@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"iplan/stack"
 	"os"
@@ -38,13 +39,23 @@ func readTree(root *tview.TreeNode, in io.Reader) error {
 	parentStack := stack.New[*tview.TreeNode]()
 	parentStack.Push(root)
 
+	start := false
 	scanner := bufio.NewScanner(in)
 	for scanner.Scan() {
 		coloredLine := scanner.Text()
+		rawLine := stripansi.Strip(coloredLine)
+		if !start {
+			if isStart(rawLine) {
+				start = true
+			} else {
+				fmt.Fprintln(os.Stdout, coloredLine)
+				continue
+			}
+		}
+
 		node := tview.NewTreeNode(ansiColorToTview(coloredLine)).Collapse()
 		parentStack.MustPeek().AddChild(node)
 
-		rawLine := stripansi.Strip(coloredLine)
 		if isOpener(rawLine) {
 			parentStack.Push(node)
 		} else if isCloser(rawLine) {
@@ -55,6 +66,13 @@ func readTree(root *tview.TreeNode, in io.Reader) error {
 		return err
 	}
 	return nil
+}
+
+func isStart(line string) bool {
+	return strings.HasSuffix(line, "Objects have changed outside of Terraform") ||
+		strings.HasPrefix(line, "Terraform detected the following changes") ||
+		strings.HasPrefix(line, "Terraform used the selected providers") ||
+		strings.HasPrefix(line, "Terraform will perform the following actions")
 }
 
 func isOpener(line string) bool {
