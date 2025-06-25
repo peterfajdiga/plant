@@ -13,25 +13,19 @@ import (
 	"github.com/rivo/tview"
 )
 
-const (
-	collapsedSymbol = ">"
-	expandedSymbol  = "v"
-	neutralSymbol   = "|"
-)
-
 func main() {
 	app := tview.NewApplication()
 	root := tview.NewTreeNode("Root")
 	tree := tview.NewTreeView().
 		SetRoot(root).
 		SetCurrentNode(root).
-		SetGraphics(false)
+		SetGraphics(false).
+		SetAlign(true)
 
 	if err := readTree(root, os.Stdin); err != nil {
 		panic(err)
 	}
 
-	markNodesWithChildren(root)
 	setupInputCapture(tree)
 
 	if err := app.SetRoot(tree, true).Run(); err != nil {
@@ -131,17 +125,6 @@ func ansiColorToTview(line string) string {
 	return replacer.Replace(line)
 }
 
-func markNodesWithChildren(node *tview.TreeNode) {
-	if len(node.GetChildren()) > 0 {
-		node.SetText(collapsedSymbol + " " + node.GetText())
-	} else {
-		node.SetText(neutralSymbol + " " + node.GetText())
-	}
-	for _, child := range node.GetChildren() {
-		markNodesWithChildren(child)
-	}
-}
-
 func setupInputCapture(tree *tview.TreeView) {
 	tree.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		node := tree.GetCurrentNode()
@@ -152,26 +135,12 @@ func setupInputCapture(tree *tview.TreeView) {
 		switch event.Key() {
 		case tcell.KeyRight:
 			node.SetExpanded(true)
-			replaceNodePrefix(node, expandedSymbol)
 			return nil
 		case tcell.KeyLeft:
 			node.SetExpanded(false)
-			replaceNodePrefix(node, collapsedSymbol)
 			return nil
 		default:
 			return event
 		}
 	})
-}
-
-func replaceNodePrefix(node *tview.TreeNode, newPrefix string) {
-	node.SetText(replacePrefix(node.GetText(), newPrefix))
-}
-
-func replacePrefix(str string, newPrefix string) string {
-	l := len(newPrefix)
-	if l > len(str) {
-		panic("prefix is longer than full string")
-	}
-	return newPrefix + str[l:]
 }
