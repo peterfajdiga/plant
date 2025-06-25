@@ -14,7 +14,8 @@ import (
 )
 
 func main() {
-	app := tview.NewApplication()
+	app := tview.NewApplication().
+		EnableMouse(true)
 	root := tview.NewTreeNode("Root")
 	tree := tview.NewTreeView().
 		SetRoot(root).
