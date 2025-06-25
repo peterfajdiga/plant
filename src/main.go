@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"iplan/stack"
 	"os"
@@ -36,69 +35,42 @@ func main() {
 }
 
 func readTree(root *tview.TreeNode, in io.Reader) error {
-	scanner := bufio.NewScanner(in)
-	lastIndentation := 0
 	parentStack := stack.New[*tview.TreeNode]()
+	parentStack.Push(root)
+
+	scanner := bufio.NewScanner(in)
 	for scanner.Scan() {
 		coloredLine := scanner.Text()
-		var indentation int
-		if coloredLine == "" {
-			indentation = lastIndentation
-		} else {
-			rawLine := stripansi.Strip(coloredLine)
-			indentation = getIndentation(rawLine)
-		}
-
-		indentationDelta := indentation - lastIndentation
-		if indentationDelta > 1 {
-			return fmt.Errorf("indentation increased by %d", indentationDelta)
-		} else if indentationDelta <= 0 {
-			parentStack.Drop(-indentationDelta + 1)
-		}
-
 		node := tview.NewTreeNode(ansiColorToTview(coloredLine)).Collapse()
-		if parent, ok := parentStack.Peek(); ok {
-			parent.AddChild(node)
-		} else {
-			root.AddChild(node)
-		}
+		parentStack.MustPeek().AddChild(node)
 
-		parentStack.Push(node)
-		lastIndentation = indentation
+		rawLine := stripansi.Strip(coloredLine)
+		if isOpener(rawLine) {
+			parentStack.Push(node)
+		} else if isCloser(rawLine) {
+			parentStack.Pop()
+		}
 	}
 	if err := scanner.Err(); err != nil {
 		return err
 	}
-
 	return nil
 }
 
-func getIndentation(line string) int {
-	spaces := countPrefixedSpaces(line)
-	spaces += matchedPrefixLen(line[spaces:])
-	return spaces / 4
+func isOpener(line string) bool {
+	if line == "" {
+		return false
+	}
+	lastChar := line[len(line)-1]
+	return lastChar == '(' || lastChar == '[' || lastChar == '{'
 }
 
-func countPrefixedSpaces(str string) int {
-	count := 0
-	for _, char := range str {
-		if char == ' ' {
-			count++
-		} else {
-			break
-		}
+func isCloser(line string) bool {
+	if line == "" {
+		return false
 	}
-	return count
-}
-
-func matchedPrefixLen(str string) int {
-	prefixes := []string{"- ", "+ ", "~ ", "<= "}
-	for _, prefix := range prefixes {
-		if strings.HasPrefix(str, prefix) {
-			return len(prefix)
-		}
-	}
-	return 0
+	firstChar := strings.TrimSpace(line)[0]
+	return firstChar == ')' || firstChar == ']' || firstChar == '}'
 }
 
 func ansiColorToTview(line string) string {
