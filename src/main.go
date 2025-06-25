@@ -19,7 +19,7 @@ func main() {
 	root := tview.NewTreeNode("Terraform plan")
 	tree := tview.NewTreeView().
 		SetRoot(root).
-		SetCurrentNode(root).
+		SetTopLevel(1). // hide root node
 		SetGraphics(false).
 		SetAlign(true)
 
@@ -28,6 +28,7 @@ func main() {
 	}
 
 	postProcess(root)
+	tree.SetCurrentNode(firstSelectableNode(root))
 	setupInputCapture(tree)
 
 	if err := app.SetRoot(tree, true).Run(); err != nil {
@@ -125,6 +126,15 @@ func postProcess(node *tview.TreeNode) {
 	for _, child := range node.GetChildren() {
 		postProcess(child)
 	}
+}
+
+func firstSelectableNode(root *tview.TreeNode) *tview.TreeNode {
+	for _, child := range root.GetChildren() {
+		if len(child.GetChildren()) > 0 {
+			return child
+		}
+	}
+	return nil
 }
 
 func setupInputCapture(tree *tview.TreeView) {
