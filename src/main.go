@@ -6,6 +6,7 @@ import (
 	"io"
 	"iplan/stack"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/acarl005/stripansi"
@@ -14,6 +15,21 @@ import (
 )
 
 func main() {
+	var in io.Reader
+	var tfIn io.Writer
+	tfCommand := os.Args[1:]
+	if len(tfCommand) > 0 {
+		stdin, stdout, err := runTerraform(tfCommand)
+		if err != nil {
+			panic(err)
+		}
+		tfIn = stdin
+		in = stdout
+	} else {
+		in = os.Stdin
+	}
+	_ = tfIn // TODO
+
 	app := tview.NewApplication().
 		EnableMouse(true)
 	root := tview.NewTreeNode("Terraform plan")
@@ -23,7 +39,7 @@ func main() {
 		SetGraphics(false).
 		SetAlign(true)
 
-	if err := readTree(root, os.Stdin); err != nil {
+	if err := readTree(root, in); err != nil {
 		panic(err)
 	}
 
@@ -34,6 +50,29 @@ func main() {
 	if err := app.SetRoot(tree, true).Run(); err != nil {
 		panic(err)
 	}
+}
+
+func runTerraform(command []string) (io.Writer, io.Reader, error) {
+	cmd := exec.Command(command[0], command[1:]...)
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create StdinPipe: %w", err)
+	}
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create StdoutPipe: %w", err)
+	}
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Start(); err != nil {
+		return nil, nil, fmt.Errorf("failed to exec command %s: %w", command, err)
+	}
+	go func() {
+		if err := cmd.Wait(); err != nil {
+			panic(err)
+		}
+	}()
+	return stdin, stdout, nil
 }
 
 func readTree(root *tview.TreeNode, in io.Reader) error {
