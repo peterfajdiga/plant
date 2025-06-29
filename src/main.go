@@ -32,12 +32,13 @@ func main() {
 
 	app := tview.NewApplication().
 		EnableMouse(true)
-	root := tview.NewTreeNode("Terraform plan")
+	root := newTreeNode("Terraform plan")
 	tree := tview.NewTreeView().
 		SetRoot(root).
 		SetTopLevel(1). // hide root node
 		SetGraphics(false).
 		SetAlign(true)
+	tree.SetBackgroundColor(tcell.ColorDefault)
 
 	query, err := readTree(root, in)
 	if err != nil {
@@ -117,7 +118,7 @@ func readTree(root *tview.TreeNode, in io.Reader) (string, error) {
 			return rawLine, nil
 		}
 
-		node := tview.NewTreeNode(ansiColorToTview(coloredLine)).Collapse()
+		node := newTreeNode(ansiColorToTview(coloredLine)).Collapse()
 		parent := parentStack.MustPeek()
 		parent.AddChild(node)
 		node.SetReference(parent)
@@ -244,7 +245,7 @@ func setupInputCapture(tree *tview.TreeView) {
 }
 
 func setupInputDialog(app *tview.Application, tree *tview.TreeView, query string, tfin io.Writer) {
-	inputNode := tview.NewTreeNode(query).
+	inputNode := newTreeNode(query).
 		SetSelectable(true).
 		SetSelectedFunc(func() {
 			modal := tview.NewModal().
@@ -278,6 +279,10 @@ func shuffleSlice[T any](slice []T) {
 	rand.Shuffle(len(slice), func(i, j int) {
 		slice[i], slice[j] = slice[j], slice[i]
 	})
+}
+
+func newTreeNode(text string) *tview.TreeNode {
+	return tview.NewTreeNode(text).SetTextStyle(tcell.StyleDefault)
 }
 
 func updateSuffix(node *tview.TreeNode) {
