@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"iplan/stack"
@@ -68,13 +67,13 @@ func main() {
 	if tfIn != nil {
 		go func() {
 			// pass user input to Terraform
-			if _, err := io.Copy(tfIn, os.Stdin); err != nil && !errors.Is(err, os.ErrClosed) {
+			if _, err := io.Copy(tfIn, os.Stdin); err != nil {
 				panic(err)
 			}
 		}()
 	}
 	// print further Terraform output
-	if _, err := io.Copy(os.Stdout, in); err != nil && !errors.Is(err, os.ErrClosed) {
+	if _, err := io.Copy(os.Stdout, in); err != nil {
 		panic(err)
 	}
 }
@@ -94,11 +93,6 @@ func runTerraform(command []string) (io.Writer, io.Reader, error) {
 	if err := cmd.Start(); err != nil {
 		return nil, nil, fmt.Errorf("failed to exec command %s: %w", command, err)
 	}
-	go func() {
-		if err := cmd.Wait(); err != nil {
-			panic(err)
-		}
-	}()
 	return stdin, stdout, nil
 }
 
