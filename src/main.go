@@ -28,7 +28,6 @@ func main() {
 	} else {
 		in = os.Stdin
 	}
-	_ = tfIn // TODO
 
 	app := tview.NewApplication().
 		EnableMouse(true)
@@ -39,13 +38,18 @@ func main() {
 		SetGraphics(false).
 		SetAlign(true)
 
-	if err := readTree(root, in); err != nil {
+	query, err := readTree(root, in)
+	if err != nil {
 		panic(err)
 	}
 
 	postProcess(root)
 	tree.SetCurrentNode(firstSelectableNode(root))
 	setupInputCapture(tree)
+
+	if query != "" && tfIn != nil {
+		setupInputDialog(app, root, query, tfIn)
+	}
 
 	if err := app.SetRoot(tree, true).Run(); err != nil {
 		panic(err)
@@ -75,7 +79,7 @@ func runTerraform(command []string) (io.Writer, io.Reader, error) {
 	return stdin, stdout, nil
 }
 
-func readTree(root *tview.TreeNode, in io.Reader) error {
+func readTree(root *tview.TreeNode, in io.Reader) (string, error) {
 	parentStack := stack.New[*tview.TreeNode]()
 	parentStack.Push(root)
 
@@ -92,6 +96,9 @@ func readTree(root *tview.TreeNode, in io.Reader) error {
 				continue
 			}
 		}
+		if needsInput(rawLine) {
+			return rawLine, nil
+		}
 
 		node := tview.NewTreeNode(ansiColorToTview(coloredLine)).Collapse()
 		parent := parentStack.MustPeek()
@@ -106,9 +113,9 @@ func readTree(root *tview.TreeNode, in io.Reader) error {
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		return err
+		return "", err
 	}
-	return nil
+	return "", nil
 }
 
 func isStart(line string) bool {
@@ -116,6 +123,11 @@ func isStart(line string) bool {
 		strings.HasPrefix(line, "Terraform detected the following changes") ||
 		strings.HasPrefix(line, "Terraform used the selected providers") ||
 		strings.HasPrefix(line, "Terraform will perform the following actions")
+}
+
+func needsInput(line string) bool {
+	return line == "Do you want to perform these actions?" ||
+		line == "Do you really want to destroy all resources?"
 }
 
 func isOpener(line string) bool {
@@ -212,6 +224,22 @@ func setupInputCapture(tree *tview.TreeView) {
 		node.SetExpanded(!node.IsExpanded())
 		updateSuffix(node)
 	})
+}
+
+func setupInputDialog(app *tview.Application, root *tview.TreeNode, query string, tfin io.Writer) {
+	inputNode := tview.NewTreeNode(query).
+		SetSelectable(true).
+		SetSelectedFunc(func() {
+			modal := tview.NewModal().
+				SetText(query).
+				AddButtons([]string{"no", "yes"}).
+				SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+					fmt.Fprintln(tfin, buttonLabel)
+					app.Stop()
+				})
+			app.SetRoot(modal, true)
+		})
+	root.AddChild(inputNode)
 }
 
 func updateSuffix(node *tview.TreeNode) {
