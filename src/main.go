@@ -91,12 +91,12 @@ func readTree(root *tview.TreeNode, in io.Reader) (string, error) {
 	scanner := bufio.NewScanner(in)
 	for scanner.Scan() {
 		coloredLine := scanner.Text()
+		fmt.Fprintln(os.Stdout, coloredLine)
 		rawLine := stripansi.Strip(coloredLine)
 		if !start {
 			if isStart(rawLine) {
 				start = true
 			} else {
-				fmt.Fprintln(os.Stdout, coloredLine)
 				continue
 			}
 		}
