@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"iplan/stack"
+	"math/rand"
 	"os"
 	"os/exec"
 	"strings"
@@ -254,7 +255,7 @@ func setupInputDialog(app *tview.Application, tree *tview.TreeView, query string
 		SetSelectedFunc(func() {
 			modal := tview.NewModal().
 				SetText(query).
-				AddButtons([]string{"no", "yes"}).
+				AddButtons(dialogButtons()).
 				SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 					fmt.Fprintln(tfin, buttonLabel)
 					app.Stop()
@@ -269,6 +270,20 @@ func setupInputDialog(app *tview.Application, tree *tview.TreeView, query string
 			app.SetRoot(modal, true)
 		})
 	tree.GetRoot().AddChild(inputNode)
+}
+
+func dialogButtons() []string {
+	const no = "no"
+	const yes = "yes"
+	buttons := []string{no, no, no, yes}
+	shuffleSlice(buttons[1:])
+	return buttons
+}
+
+func shuffleSlice[T any](slice []T) {
+	rand.Shuffle(len(slice), func(i, j int) {
+		slice[i], slice[j] = slice[j], slice[i]
+	})
 }
 
 func updateSuffix(node *tview.TreeNode) {
