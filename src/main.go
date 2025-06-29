@@ -50,7 +50,7 @@ func main() {
 
 	if query != "" {
 		if tfIn != nil {
-			setupInputDialog(app, root, query, tfIn)
+			setupInputDialog(app, tree, query, tfIn)
 		} else {
 			if _, err := io.Copy(os.Stdout, in); err != nil {
 				panic(err)
@@ -248,7 +248,7 @@ func setupInputCapture(tree *tview.TreeView) {
 	})
 }
 
-func setupInputDialog(app *tview.Application, root *tview.TreeNode, query string, tfin io.Writer) {
+func setupInputDialog(app *tview.Application, tree *tview.TreeView, query string, tfin io.Writer) {
 	inputNode := tview.NewTreeNode(query).
 		SetSelectable(true).
 		SetSelectedFunc(func() {
@@ -259,9 +259,16 @@ func setupInputDialog(app *tview.Application, root *tview.TreeNode, query string
 					fmt.Fprintln(tfin, buttonLabel)
 					app.Stop()
 				})
+			modal.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+				if event.Key() == tcell.KeyEsc {
+					app.SetRoot(tree, true)
+					return nil
+				}
+				return event
+			})
 			app.SetRoot(modal, true)
 		})
-	root.AddChild(inputNode)
+	tree.GetRoot().AddChild(inputNode)
 }
 
 func updateSuffix(node *tview.TreeNode) {
