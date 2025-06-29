@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"iplan/stack"
@@ -63,7 +64,16 @@ func main() {
 		panic(err)
 	}
 
-	if _, err := io.Copy(os.Stdout, in); err != nil {
+	if tfIn != nil {
+		go func() {
+			// pass user input to Terraform
+			if _, err := io.Copy(tfIn, os.Stdin); err != nil && !errors.Is(err, os.ErrClosed) {
+				panic(err)
+			}
+		}()
+	}
+	// print further Terraform output
+	if _, err := io.Copy(os.Stdout, in); err != nil && !errors.Is(err, os.ErrClosed) {
 		panic(err)
 	}
 }
