@@ -54,6 +54,10 @@ func main() {
 	if err := app.SetRoot(tree, true).Run(); err != nil {
 		panic(err)
 	}
+
+	if _, err := io.Copy(os.Stdout, in); err != nil {
+		panic(err)
+	}
 }
 
 func runTerraform(command []string) (io.Writer, io.Reader, error) {
