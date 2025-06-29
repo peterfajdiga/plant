@@ -232,7 +232,7 @@ func setupInputCapture(tree *tview.TreeView) {
 				updateSuffix(node)
 			} else {
 				parent, ok := node.GetReference().(*tview.TreeNode)
-				if ok {
+				if ok && parent != tree.GetRoot() {
 					tree.SetCurrentNode(parent)
 				}
 			}
