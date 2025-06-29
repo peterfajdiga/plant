@@ -47,8 +47,16 @@ func main() {
 	tree.SetCurrentNode(firstSelectableNode(root))
 	setupInputCapture(tree)
 
-	if query != "" && tfIn != nil {
-		setupInputDialog(app, root, query, tfIn)
+	if query != "" {
+		if tfIn != nil {
+			setupInputDialog(app, root, query, tfIn)
+		} else {
+			if _, err := io.Copy(os.Stdout, in); err != nil {
+				panic(err)
+			}
+			fmt.Fprintln(os.Stderr, "iplan: Piping only works with `terraform plan | iplan`. For apply or destroy run `iplan terraform apply` or `iplan terraform destroy`.")
+			os.Exit(1)
+		}
 	}
 
 	if err := app.SetRoot(tree, true).Run(); err != nil {
