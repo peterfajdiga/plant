@@ -8,8 +8,8 @@
 
 <details>
 <summary>$${\color{orange}\sim}$$ resource "Terraform plan presentation" {</summary>
-   $${\color{orange}\sim}$$ mode = "wall of text" $${\color{orange}->}$$ "concise list of changes"<br/>
-   $${\color{orange}\sim}$$ details_shown = "all" $${\color{orange}->}$$ "user-selected"<br/>
+   $${\color{orange}\sim}$$ mode = "wall of text" $${\color{orange}\rightarrow}$$ "concise list of changes"<br/>
+   $${\color{orange}\sim}$$ details_shown = "all" $${\color{orange}\rightarrow}$$ "user-selected"<br/>
   }
 </details>
 
