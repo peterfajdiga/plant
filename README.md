@@ -1,15 +1,15 @@
 # iplan
 
 <details>
-<summary>$${\color{green}+}$$ Interactive Terraform plan viewer {</summary>
-   $${\color{green}+}$$ Displays your Terraform plan changes in a TUI tree view.<br/>
-   $${\color{green}+}$$ Branches can be collapsed and expanded.<br/>
+<summary>$${\color{green}+}$$ resource "Interactive Terraform plan viewer" {</summary>
+   $${\color{green}+}$$ description = "Displays your Terraform plan changes in a TUI tree view with collapsible branches"<br/>
   }
 </details>
 
 <details>
-<summary>$${\color{orange}\sim}$$ Terraform plan presentation {</summary>
-   $${\color{orange}\sim}$$ Wall of text with all details $${\color{orange}->}$$ concise list of changes with elective details<br/>
+<summary>$${\color{orange}\sim}$$ resource "Terraform plan presentation" {</summary>
+   $${\color{orange}\sim}$$ mode = "wall of text" $${\color{orange}->}$$ "concise list of changes"<br/>
+   $${\color{orange}\sim}$$ details_shown = "all" $${\color{orange}->}$$ "user-selected"<br/>
   }
 </details>
 
