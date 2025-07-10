@@ -1,4 +1,4 @@
-# iplan
+# plant
 
 <details>
 <summary>$${\color{green}+}$$ resource "Interactive Terraform plan viewer" {</summary>
@@ -16,17 +16,17 @@
 ## Usage
 
 ```bash
-$ iplan terraform plan
+$ plant terraform plan
 ```
 
 ```bash
-$ terraform plan | iplan
+$ terraform plan | plant
 ```
 
 ```bash
-$ iplan terraform apply
+$ plant terraform apply
 ```
 
 ```bash
-$ iplan terraform destroy
+$ plant terraform destroy
 ```

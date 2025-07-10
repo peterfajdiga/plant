@@ -1,4 +1,4 @@
-module iplan
+module plant
 
 go 1.24.2
 

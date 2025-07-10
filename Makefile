@@ -3,7 +3,7 @@ INSTALL_PATH := ~/.local/bin
 .PHONY: *
 
 build:
-	cd src && go build -o ../build/iplan
+	cd src && go build -o ../build/plant
 
 install: build
-	cp ./build/iplan ${INSTALL_PATH}
+	cp ./build/plant ${INSTALL_PATH}

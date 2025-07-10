@@ -4,10 +4,10 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"iplan/stack"
 	"math/rand"
 	"os"
 	"os/exec"
+	"plant/stack"
 	"strings"
 
 	"github.com/acarl005/stripansi"
@@ -56,7 +56,7 @@ func main() {
 			if _, err := io.Copy(os.Stdout, in); err != nil {
 				panic(err)
 			}
-			fmt.Fprintln(os.Stderr, "iplan: Piping only works with `terraform plan | iplan`. For apply or destroy run `iplan terraform apply` or `iplan terraform destroy`.")
+			fmt.Fprintln(os.Stderr, "plant: Piping only works with `terraform plan | plant`. For apply or destroy run `plant terraform apply` or `plant terraform destroy`.")
 			os.Exit(1)
 		}
 	}
