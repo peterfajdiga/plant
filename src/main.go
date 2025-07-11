@@ -157,10 +157,11 @@ func isOpener(line string) bool {
 }
 
 func isCloser(line string) bool {
-	if line == "" {
+	trimmedLine := strings.TrimSpace(line)
+	if trimmedLine == "" {
 		return false
 	}
-	firstChar := strings.TrimSpace(line)[0]
+	firstChar := trimmedLine[0]
 	return firstChar == ')' || firstChar == ']' || firstChar == '}'
 }
 
