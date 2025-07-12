@@ -189,7 +189,7 @@ func ansiColorToTview(line string) string {
 	return replacer.Replace(line)
 }
 
-func setupInputDialog(app *tview.Application, tree *tview.TreeView, query string, tfin io.Writer) {
+func setupInputDialog(app *tview.Application, tree *tview.TreeView, query string, tfIn io.Writer) {
 	inputNode := newTreeNode(query).
 		SetSelectable(true).
 		SetSelectedFunc(func() {
@@ -197,7 +197,7 @@ func setupInputDialog(app *tview.Application, tree *tview.TreeView, query string
 				SetText(query).
 				AddButtons(dialogButtons()).
 				SetDoneFunc(func(buttonIndex int, buttonLabel string) {
-					fmt.Fprintln(tfin, buttonLabel)
+					fmt.Fprintln(tfIn, buttonLabel)
 					app.Stop()
 				})
 			modal.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
