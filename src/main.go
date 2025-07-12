@@ -48,7 +48,7 @@ func main() {
 	queryAnswered := false
 	if query != "" {
 		if tfProc != nil {
-			setupInputDialog(app, tree, query, tfProc.Stdin, &queryAnswered)
+			setupInputDialog(app, tree, query, tfProc.Stdin, func() { queryAnswered = true })
 		} else {
 			if _, err := io.Copy(os.Stdout, in); err != nil {
 				panic(err)
@@ -196,7 +196,7 @@ func ansiColorToTview(line string) string {
 	return replacer.Replace(line)
 }
 
-func setupInputDialog(app *tview.Application, tree *tview.TreeView, query string, tfIn io.Writer, done *bool) {
+func setupInputDialog(app *tview.Application, tree *tview.TreeView, query string, tfIn io.Writer, done func()) {
 	inputNode := newTreeNode(query).
 		SetSelectable(true).
 		SetSelectedFunc(func() {
@@ -205,7 +205,7 @@ func setupInputDialog(app *tview.Application, tree *tview.TreeView, query string
 				AddButtons(dialogButtons()).
 				SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 					fmt.Fprintln(tfIn, buttonLabel)
-					*done = true
+					done()
 					app.Stop()
 				})
 			modal.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
