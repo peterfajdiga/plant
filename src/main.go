@@ -65,14 +65,6 @@ func main() {
 		panic(err)
 	}
 
-	if tfIn != nil {
-		go func() {
-			// pass user input to Terraform
-			if _, err := io.Copy(tfIn, os.Stdin); err != nil {
-				panic(err)
-			}
-		}()
-	}
 	// print further Terraform output
 	if _, err := io.Copy(os.Stdout, in); err != nil {
 		panic(err)
