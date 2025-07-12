@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -45,6 +46,19 @@ func main() {
 	tree := newTreeView(root)
 	app := newApp(tree)
 
+	if tfProc != nil {
+		// using `SetAfterDrawFunc` to ensure `app.Stop` is not called before `app.Run`
+		app.SetAfterDrawFunc(func(_ tcell.Screen) {
+			app.SetAfterDrawFunc(nil)
+			go func() {
+				err := tfProc.Cmd.Wait()
+				if err != nil || query != "" {
+					app.Stop()
+				}
+			}()
+		})
+	}
+
 	queryAnswered := false
 	if query != "" {
 		if tfProc != nil {
@@ -67,7 +81,7 @@ func main() {
 	}
 
 	// print further Terraform output
-	if _, err := io.Copy(os.Stdout, in); err != nil {
+	if _, err := io.Copy(os.Stdout, in); err != nil && !errors.Is(err, os.ErrClosed) {
 		panic(err)
 	}
 }
