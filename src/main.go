@@ -41,8 +41,6 @@ func main() {
 		panic(err)
 	}
 
-	postProcess(root)
-
 	app := tview.NewApplication().
 		EnableMouse(true)
 	tree := tview.NewTreeView().
@@ -127,10 +125,14 @@ func readTree(root *tview.TreeNode, in io.Reader) (string, error) {
 		parent.AddChild(node)
 		node.SetReference(parent)
 
-		if isOpener(rawLine) {
+		opener := isOpener(rawLine)
+		closer := isCloser(rawLine)
+		node.SetSelectable(opener)
+		if opener {
+			node.SetSelectable(true)
 			parentStack.Push(node)
 			updateSuffix(node)
-		} else if isCloser(rawLine) {
+		} else if closer {
 			parentStack.Pop()
 		}
 	}
@@ -193,13 +195,6 @@ func ansiColorToTview(line string) string {
 		"\033[0m", "[-:-:-]", // reset all
 	)
 	return replacer.Replace(line)
-}
-
-func postProcess(node *tview.TreeNode) {
-	node.SetSelectable(len(node.GetChildren()) > 0)
-	for _, child := range node.GetChildren() {
-		postProcess(child)
-	}
 }
 
 func firstSelectableNode(root *tview.TreeNode) *tview.TreeNode {
