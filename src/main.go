@@ -16,6 +16,7 @@ import (
 )
 
 type process struct {
+	Cmd    *exec.Cmd
 	Stdin  io.Writer
 	Stdout io.Reader
 }
@@ -44,9 +45,10 @@ func main() {
 	tree := newTreeView(root)
 	app := newApp(tree)
 
+	queryAnswered := false
 	if query != "" {
 		if tfProc != nil {
-			setupInputDialog(app, tree, query, tfProc.Stdin)
+			setupInputDialog(app, tree, query, tfProc.Stdin, &queryAnswered)
 		} else {
 			if _, err := io.Copy(os.Stdout, in); err != nil {
 				panic(err)
@@ -58,6 +60,10 @@ func main() {
 
 	if err := app.Run(); err != nil {
 		panic(err)
+	}
+
+	if tfProc != nil && !queryAnswered {
+		tfProc.Cmd.Process.Signal(os.Interrupt)
 	}
 
 	// print further Terraform output
@@ -86,6 +92,7 @@ func runTerraform(command []string) (*process, error) {
 	}
 
 	return &process{
+		Cmd:    cmd,
 		Stdin:  stdin,
 		Stdout: stdout,
 	}, nil
@@ -189,7 +196,7 @@ func ansiColorToTview(line string) string {
 	return replacer.Replace(line)
 }
 
-func setupInputDialog(app *tview.Application, tree *tview.TreeView, query string, tfIn io.Writer) {
+func setupInputDialog(app *tview.Application, tree *tview.TreeView, query string, tfIn io.Writer, done *bool) {
 	inputNode := newTreeNode(query).
 		SetSelectable(true).
 		SetSelectedFunc(func() {
@@ -198,6 +205,7 @@ func setupInputDialog(app *tview.Application, tree *tview.TreeView, query string
 				AddButtons(dialogButtons()).
 				SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 					fmt.Fprintln(tfIn, buttonLabel)
+					*done = true
 					app.Stop()
 				})
 			modal.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
