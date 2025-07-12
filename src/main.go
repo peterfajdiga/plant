@@ -30,22 +30,22 @@ func main() {
 		in = os.Stdin
 	}
 
-	app := tview.NewApplication().
-		EnableMouse(true)
 	root := newTreeNode("Terraform plan")
-	tree := tview.NewTreeView().
-		SetRoot(root).
-		SetTopLevel(1). // hide root node
-		SetGraphics(false).
-		SetAlign(true)
-	tree.SetBackgroundColor(tcell.ColorDefault)
-
 	query, err := readTree(root, in)
 	if err != nil {
 		panic(err)
 	}
 
 	postProcess(root)
+
+	app := tview.NewApplication().
+		EnableMouse(true)
+	tree := tview.NewTreeView().
+		SetRoot(root).
+		SetTopLevel(1). // hide root node
+		SetGraphics(false).
+		SetAlign(true)
+	tree.SetBackgroundColor(tcell.ColorDefault)
 	tree.SetCurrentNode(firstSelectableNode(root))
 	setupInputCapture(tree)
 
