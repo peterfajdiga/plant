@@ -41,16 +41,8 @@ func main() {
 		panic(err)
 	}
 
-	app := tview.NewApplication().
-		EnableMouse(true)
-	tree := tview.NewTreeView().
-		SetRoot(root).
-		SetTopLevel(1). // hide root node
-		SetGraphics(false).
-		SetAlign(true)
-	tree.SetBackgroundColor(tcell.ColorDefault)
-	tree.SetCurrentNode(firstSelectableNode(root))
-	setupInputCapture(tree)
+	tree := newTreeView(root)
+	app := newApp(tree)
 
 	if query != "" {
 		if tfProc != nil {
@@ -64,7 +56,7 @@ func main() {
 		}
 	}
 
-	if err := app.SetRoot(tree, true).Run(); err != nil {
+	if err := app.Run(); err != nil {
 		panic(err)
 	}
 
@@ -197,6 +189,67 @@ func ansiColorToTview(line string) string {
 	return replacer.Replace(line)
 }
 
+func setupInputDialog(app *tview.Application, tree *tview.TreeView, query string, tfin io.Writer) {
+	inputNode := newTreeNode(query).
+		SetSelectable(true).
+		SetSelectedFunc(func() {
+			modal := tview.NewModal().
+				SetText(query).
+				AddButtons(dialogButtons()).
+				SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+					fmt.Fprintln(tfin, buttonLabel)
+					app.Stop()
+				})
+			modal.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+				if event.Key() == tcell.KeyEsc {
+					app.SetRoot(tree, true)
+					return nil
+				}
+				return event
+			})
+			app.SetRoot(modal, true)
+		})
+	tree.GetRoot().AddChild(inputNode)
+}
+
+func dialogButtons() []string {
+	const no = "no"
+	const yes = "yes"
+	buttons := []string{no, no, no, yes}
+	shuffleSlice(buttons[1:])
+	return buttons
+}
+
+func shuffleSlice[T any](slice []T) {
+	rand.Shuffle(len(slice), func(i, j int) {
+		slice[i], slice[j] = slice[j], slice[i]
+	})
+}
+
+func newTreeNode(text string) *tview.TreeNode {
+	return tview.NewTreeNode(text).SetTextStyle(tcell.StyleDefault)
+}
+
+func newTreeView(root *tview.TreeNode) *tview.TreeView {
+	tree := tview.NewTreeView().
+		SetRoot(root).
+		SetTopLevel(1). // hide root node
+		SetGraphics(false).
+		SetAlign(true)
+
+	tree.SetBackgroundColor(tcell.ColorDefault)
+	tree.SetCurrentNode(firstSelectableNode(root))
+	setupInputCapture(tree)
+
+	return tree
+}
+
+func newApp(tree *tview.TreeView) *tview.Application {
+	return tview.NewApplication().
+		SetRoot(tree, true).
+		EnableMouse(true)
+}
+
 func firstSelectableNode(root *tview.TreeNode) *tview.TreeNode {
 	for _, child := range root.GetChildren() {
 		if len(child.GetChildren()) > 0 {
@@ -242,47 +295,6 @@ func setupInputCapture(tree *tview.TreeView) {
 		node.SetExpanded(!node.IsExpanded())
 		updateSuffix(node)
 	})
-}
-
-func setupInputDialog(app *tview.Application, tree *tview.TreeView, query string, tfin io.Writer) {
-	inputNode := newTreeNode(query).
-		SetSelectable(true).
-		SetSelectedFunc(func() {
-			modal := tview.NewModal().
-				SetText(query).
-				AddButtons(dialogButtons()).
-				SetDoneFunc(func(buttonIndex int, buttonLabel string) {
-					fmt.Fprintln(tfin, buttonLabel)
-					app.Stop()
-				})
-			modal.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-				if event.Key() == tcell.KeyEsc {
-					app.SetRoot(tree, true)
-					return nil
-				}
-				return event
-			})
-			app.SetRoot(modal, true)
-		})
-	tree.GetRoot().AddChild(inputNode)
-}
-
-func dialogButtons() []string {
-	const no = "no"
-	const yes = "yes"
-	buttons := []string{no, no, no, yes}
-	shuffleSlice(buttons[1:])
-	return buttons
-}
-
-func shuffleSlice[T any](slice []T) {
-	rand.Shuffle(len(slice), func(i, j int) {
-		slice[i], slice[j] = slice[j], slice[i]
-	})
-}
-
-func newTreeNode(text string) *tview.TreeNode {
-	return tview.NewTreeNode(text).SetTextStyle(tcell.StyleDefault)
 }
 
 func updateSuffix(node *tview.TreeNode) {
