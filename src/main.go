@@ -15,17 +15,22 @@ import (
 	"github.com/rivo/tview"
 )
 
+type process struct {
+	Stdin  io.Writer
+	Stdout io.Reader
+}
+
 func main() {
 	var in io.Reader
-	var tfIn io.Writer
+	var tfProc *process
 	tfCommand := os.Args[1:]
 	if len(tfCommand) > 0 {
-		stdin, stdout, err := runTerraform(tfCommand)
+		proc, err := runTerraform(tfCommand)
 		if err != nil {
 			panic(err)
 		}
-		tfIn = stdin
-		in = stdout
+		tfProc = proc
+		in = tfProc.Stdout
 	} else {
 		in = os.Stdin
 	}
@@ -50,8 +55,8 @@ func main() {
 	setupInputCapture(tree)
 
 	if query != "" {
-		if tfIn != nil {
-			setupInputDialog(app, tree, query, tfIn)
+		if tfProc != nil {
+			setupInputDialog(app, tree, query, tfProc.Stdin)
 		} else {
 			if _, err := io.Copy(os.Stdout, in); err != nil {
 				panic(err)
@@ -71,22 +76,29 @@ func main() {
 	}
 }
 
-func runTerraform(command []string) (io.Writer, io.Reader, error) {
+func runTerraform(command []string) (*process, error) {
 	cmd := exec.Command(command[0], command[1:]...)
+
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create StdinPipe: %w", err)
+		return nil, fmt.Errorf("failed to create StdinPipe: %w", err)
 	}
+
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create StdoutPipe: %w", err)
+		return nil, fmt.Errorf("failed to create StdoutPipe: %w", err)
 	}
+
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Start(); err != nil {
-		return nil, nil, fmt.Errorf("failed to exec command %s: %w", command, err)
+		return nil, fmt.Errorf("failed to exec command %s: %w", command, err)
 	}
-	return stdin, stdout, nil
+
+	return &process{
+		Stdin:  stdin,
+		Stdout: stdout,
+	}, nil
 }
 
 func readTree(root *tview.TreeNode, in io.Reader) (string, error) {
