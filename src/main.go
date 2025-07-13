@@ -39,6 +39,9 @@ func main() {
 			panic(err)
 		}
 		if tfProc != nil {
+			if _, err := io.Copy(os.Stderr, tfProc.Stderr); err != nil && !errors.Is(err, os.ErrClosed) {
+				panic(err)
+			}
 			_ = tfProc.Cmd.Wait()
 		}
 		os.Exit(1)
@@ -87,6 +90,11 @@ func main() {
 	// print further Terraform output
 	if _, err := io.Copy(os.Stdout, in); err != nil && !errors.Is(err, os.ErrClosed) {
 		panic(err)
+	}
+	if tfProc != nil {
+		if _, err := io.Copy(os.Stderr, tfProc.Stderr); err != nil && !errors.Is(err, os.ErrClosed) {
+			panic(err)
+		}
 	}
 }
 

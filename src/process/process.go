@@ -1,9 +1,9 @@
 package process
 
 import (
+	"bytes"
 	"fmt"
 	"io"
-	"os"
 	"os/exec"
 )
 
@@ -11,6 +11,7 @@ type Process struct {
 	Cmd    *exec.Cmd
 	Stdin  io.Writer
 	Stdout io.Reader
+	Stderr io.Reader
 }
 
 func Exec(command []string) (*Process, error) {
@@ -26,7 +27,8 @@ func Exec(command []string) (*Process, error) {
 		return nil, fmt.Errorf("failed to create StdoutPipe: %w", err)
 	}
 
-	cmd.Stderr = os.Stderr
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
 
 	if err := cmd.Start(); err != nil {
 		return nil, fmt.Errorf("failed to exec command %s: %w", command, err)
@@ -36,5 +38,6 @@ func Exec(command []string) (*Process, error) {
 		Cmd:    cmd,
 		Stdin:  stdin,
 		Stdout: stdout,
+		Stderr: &stderr,
 	}, nil
 }
