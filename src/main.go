@@ -125,10 +125,10 @@ func readTree(root *tview.TreeNode, in io.Reader) (string, error) {
 }
 
 func isStart(line string) bool {
-	return strings.HasSuffix(line, "Objects have changed outside of Terraform") ||
-		strings.HasPrefix(line, "Terraform detected the following changes") ||
-		strings.HasPrefix(line, "Terraform used the selected providers") ||
-		strings.HasPrefix(line, "Terraform will perform the following actions")
+	return strings.Contains(line, "Objects have changed outside of Terraform") ||
+		strings.Contains(line, "Terraform detected the following changes") ||
+		strings.Contains(line, "Terraform used the selected providers") ||
+		strings.Contains(line, "Terraform will perform the following actions")
 }
 
 func needsInput(line string) bool {
