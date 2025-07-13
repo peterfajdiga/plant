@@ -71,6 +71,8 @@ func main() {
 	}
 
 	if tfProc != nil && !promptAnswered {
+		// user exited the interactive menu without answering the prompt
+		// user wants to exit
 		tfProc.Cmd.Process.Signal(os.Interrupt)
 	}
 
