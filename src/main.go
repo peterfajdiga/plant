@@ -31,8 +31,8 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+		in = proc.Stdout
 		tfProc = proc
-		in = tfProc.Stdout
 	} else {
 		in = os.Stdin
 	}
