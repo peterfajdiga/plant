@@ -37,8 +37,9 @@ func main() {
 		in = os.Stdin
 	}
 
+	inTee := io.TeeReader(in, os.Stdout)
 	root := newTreeNode("Terraform plan")
-	query, err := readTree(root, in)
+	query, err := readTree(root, inTee)
 	if err != nil {
 		panic(err)
 	}
@@ -120,7 +121,6 @@ func readTree(root *tview.TreeNode, in io.Reader) (string, error) {
 	scanner := bufio.NewScanner(in)
 	for scanner.Scan() {
 		coloredLine := scanner.Text()
-		fmt.Fprintln(os.Stdout, coloredLine)
 		rawLine := stripansi.Strip(coloredLine)
 		if !start {
 			if isStart(rawLine) {
