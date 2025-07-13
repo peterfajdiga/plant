@@ -7,7 +7,7 @@ import (
 	"io"
 	"math/rand"
 	"os"
-	"os/exec"
+	"plant/process"
 	"plant/stack"
 	"strings"
 
@@ -16,18 +16,12 @@ import (
 	"github.com/rivo/tview"
 )
 
-type process struct {
-	Cmd    *exec.Cmd
-	Stdin  io.Writer
-	Stdout io.Reader
-}
-
 func main() {
 	var in io.Reader
-	var tfProc *process
+	var tfProc *process.Process
 	tfCommand := os.Args[1:]
 	if len(tfCommand) > 0 {
-		proc, err := runTerraform(tfCommand)
+		proc, err := process.Exec(tfCommand)
 		if err != nil {
 			panic(err)
 		}
@@ -85,32 +79,6 @@ func main() {
 	if _, err := io.Copy(os.Stdout, in); err != nil && !errors.Is(err, os.ErrClosed) {
 		panic(err)
 	}
-}
-
-func runTerraform(command []string) (*process, error) {
-	cmd := exec.Command(command[0], command[1:]...)
-
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create StdinPipe: %w", err)
-	}
-
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create StdoutPipe: %w", err)
-	}
-
-	cmd.Stderr = os.Stderr
-
-	if err := cmd.Start(); err != nil {
-		return nil, fmt.Errorf("failed to exec command %s: %w", command, err)
-	}
-
-	return &process{
-		Cmd:    cmd,
-		Stdin:  stdin,
-		Stdout: stdout,
-	}, nil
 }
 
 func readTree(root *tview.TreeNode, in io.Reader) (string, error) {
