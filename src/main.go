@@ -33,7 +33,7 @@ func main() {
 
 	inTee := io.TeeReader(in, os.Stdout)
 	root := newTreeNode("Terraform plan")
-	query, err := readTree(root, inTee)
+	promptMsg, err := readTree(root, inTee)
 	if err != nil {
 		panic(err)
 	}
@@ -41,10 +41,10 @@ func main() {
 	tree := newTreeView(root)
 	app := newApp(tree)
 
-	queryAnswered := false
-	if query != "" {
+	promptAnswered := false
+	if promptMsg != "" {
 		if tfProc != nil {
-			setupInputDialog(app, tree, query, tfProc.Stdin, func() { queryAnswered = true })
+			setupInputDialog(app, tree, promptMsg, tfProc.Stdin, func() { promptAnswered = true })
 		} else {
 			if _, err := io.Copy(os.Stdout, in); err != nil {
 				panic(err)
@@ -60,7 +60,7 @@ func main() {
 			app.SetAfterDrawFunc(nil)
 			go func() {
 				err := tfProc.Cmd.Wait()
-				if err != nil || query != "" {
+				if err != nil || promptMsg != "" {
 					app.Stop()
 				}
 			}()
@@ -70,7 +70,7 @@ func main() {
 		panic(err)
 	}
 
-	if tfProc != nil && !queryAnswered {
+	if tfProc != nil && !promptAnswered {
 		tfProc.Cmd.Process.Signal(os.Interrupt)
 	}
 
@@ -177,12 +177,12 @@ func ansiColorToTview(line string) string {
 	return replacer.Replace(line)
 }
 
-func setupInputDialog(app *tview.Application, tree *tview.TreeView, query string, tfIn io.Writer, done func()) {
-	inputNode := newTreeNode(query).
+func setupInputDialog(app *tview.Application, tree *tview.TreeView, promptMsg string, tfIn io.Writer, done func()) {
+	inputNode := newTreeNode(promptMsg).
 		SetSelectable(true).
 		SetSelectedFunc(func() {
 			modal := tview.NewModal().
-				SetText(query).
+				SetText(promptMsg).
 				AddButtons(dialogButtons()).
 				SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 					fmt.Fprintln(tfIn, buttonLabel)
