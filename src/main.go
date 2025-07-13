@@ -35,13 +35,9 @@ func main() {
 	root := newTreeNode("Terraform plan")
 	promptMsg, err := readTree(root, inTee)
 	if errors.Is(err, ErrTerraform) {
-		if _, err := io.Copy(os.Stdout, in); err != nil && !errors.Is(err, os.ErrClosed) {
-			panic(err)
-		}
+		mustCopy(os.Stdout, in)
 		if tfProc != nil {
-			if _, err := io.Copy(os.Stderr, tfProc.Stderr); err != nil && !errors.Is(err, os.ErrClosed) {
-				panic(err)
-			}
+			mustCopy(os.Stderr, tfProc.Stderr)
 			_ = tfProc.Cmd.Wait()
 		}
 		os.Exit(1)
@@ -57,9 +53,7 @@ func main() {
 		if tfProc != nil {
 			setupInputDialog(app, tree, promptMsg, tfProc.Stdin, func() { promptAnswered = true })
 		} else {
-			if _, err := io.Copy(os.Stdout, in); err != nil {
-				panic(err)
-			}
+			mustCopy(os.Stdout, in)
 			fmt.Fprintln(os.Stderr, "plant: Piping only works with `terraform plan | plant`. For apply or destroy run `plant terraform apply` or `plant terraform destroy`.")
 			os.Exit(1)
 		}
@@ -88,13 +82,15 @@ func main() {
 	}
 
 	// print further Terraform output
-	if _, err := io.Copy(os.Stdout, in); err != nil && !errors.Is(err, os.ErrClosed) {
-		panic(err)
-	}
+	mustCopy(os.Stdout, in)
 	if tfProc != nil {
-		if _, err := io.Copy(os.Stderr, tfProc.Stderr); err != nil && !errors.Is(err, os.ErrClosed) {
-			panic(err)
-		}
+		mustCopy(os.Stderr, tfProc.Stderr)
+	}
+}
+
+func mustCopy(dst io.Writer, src io.Reader) {
+	if _, err := io.Copy(dst, src); err != nil && !errors.Is(err, os.ErrClosed) {
+		panic(err)
 	}
 }
 
