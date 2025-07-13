@@ -41,19 +41,6 @@ func main() {
 	tree := newTreeView(root)
 	app := newApp(tree)
 
-	if tfProc != nil {
-		// using `SetAfterDrawFunc` to ensure `app.Stop` is not called before `app.Run`
-		app.SetAfterDrawFunc(func(_ tcell.Screen) {
-			app.SetAfterDrawFunc(nil)
-			go func() {
-				err := tfProc.Cmd.Wait()
-				if err != nil || query != "" {
-					app.Stop()
-				}
-			}()
-		})
-	}
-
 	queryAnswered := false
 	if query != "" {
 		if tfProc != nil {
@@ -67,6 +54,18 @@ func main() {
 		}
 	}
 
+	if tfProc != nil {
+		// using `SetAfterDrawFunc` to ensure `app.Stop` is not called before `app.Run`
+		app.SetAfterDrawFunc(func(_ tcell.Screen) {
+			app.SetAfterDrawFunc(nil)
+			go func() {
+				err := tfProc.Cmd.Wait()
+				if err != nil || query != "" {
+					app.Stop()
+				}
+			}()
+		})
+	}
 	if err := app.Run(); err != nil {
 		panic(err)
 	}
