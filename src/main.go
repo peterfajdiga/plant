@@ -34,7 +34,15 @@ func main() {
 	inTee := io.TeeReader(in, os.Stdout)
 	root := newTreeNode("Terraform plan")
 	promptMsg, err := readTree(root, inTee)
-	if err != nil {
+	if errors.Is(err, ErrTerraform) {
+		if _, err := io.Copy(os.Stdout, in); err != nil && !errors.Is(err, os.ErrClosed) {
+			panic(err)
+		}
+		if tfProc != nil {
+			_ = tfProc.Cmd.Wait()
+		}
+		os.Exit(1)
+	} else if err != nil {
 		panic(err)
 	}
 
@@ -82,6 +90,8 @@ func main() {
 	}
 }
 
+var ErrTerraform = errors.New("terraform encountered a problem")
+
 func readTree(root *tview.TreeNode, in io.Reader) (string, error) {
 	parentStack := stack.New[*tview.TreeNode]()
 	parentStack.Push(root)
@@ -91,6 +101,9 @@ func readTree(root *tview.TreeNode, in io.Reader) (string, error) {
 	for scanner.Scan() {
 		coloredLine := scanner.Text()
 		rawLine := stripansi.Strip(coloredLine)
+		if isProblem(rawLine) {
+			return "", ErrTerraform
+		}
 		if !start {
 			if isStart(rawLine) {
 				start = true
@@ -129,6 +142,10 @@ func isStart(line string) bool {
 		strings.Contains(line, "Terraform detected the following changes") ||
 		strings.Contains(line, "Terraform used the selected providers") ||
 		strings.Contains(line, "Terraform will perform the following actions")
+}
+
+func isProblem(line string) bool {
+	return strings.Contains(line, "Terraform planned the following actions, but then encountered a problem")
 }
 
 func needsInput(line string) bool {
