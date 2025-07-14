@@ -41,6 +41,13 @@ func main() {
 			_ = tfProc.Cmd.Wait()
 		}
 		os.Exit(1)
+	} else if errors.Is(err, ErrNoChanges) {
+		mustCopy(os.Stdout, in)
+		if tfProc != nil {
+			mustCopy(os.Stderr, tfProc.Stderr)
+			_ = tfProc.Cmd.Wait()
+		}
+		os.Exit(0)
 	} else if err != nil {
 		panic(err)
 	}
@@ -94,7 +101,10 @@ func mustCopy(dst io.Writer, src io.Reader) {
 	}
 }
 
-var ErrTerraform = errors.New("terraform encountered a problem")
+var (
+	ErrTerraform = errors.New("terraform encountered a problem")
+	ErrNoChanges = errors.New("no changes")
+)
 
 func readTree(root *tview.TreeNode, in io.Reader) (string, error) {
 	parentStack := stack.New[*tview.TreeNode]()
@@ -107,6 +117,8 @@ func readTree(root *tview.TreeNode, in io.Reader) (string, error) {
 		rawLine := stripansi.Strip(coloredLine)
 		if isProblem(rawLine) {
 			return "", ErrTerraform
+		} else if isNoChanges(rawLine) {
+			return "", ErrNoChanges
 		}
 		if !start {
 			if isStart(rawLine) {
@@ -150,6 +162,10 @@ func isStart(line string) bool {
 
 func isProblem(line string) bool {
 	return strings.Contains(line, "Terraform planned the following actions, but then encountered a problem")
+}
+
+func isNoChanges(line string) bool {
+	return strings.Contains(line, "No changes. Your infrastructure matches the configuration.")
 }
 
 func needsInput(line string) bool {
