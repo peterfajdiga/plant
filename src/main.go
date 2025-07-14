@@ -34,22 +34,19 @@ func main() {
 	inTee := io.TeeReader(in, os.Stdout)
 	root := newTreeNode("Terraform plan")
 	promptMsg, err := readTree(root, inTee)
-	if errors.Is(err, ErrTerraform) {
+	if err != nil {
 		mustCopy(os.Stdout, in)
 		if tfProc != nil {
 			mustCopy(os.Stderr, tfProc.Stderr)
 			_ = tfProc.Cmd.Wait()
 		}
-		os.Exit(1)
-	} else if errors.Is(err, ErrNoChanges) {
-		mustCopy(os.Stdout, in)
-		if tfProc != nil {
-			mustCopy(os.Stderr, tfProc.Stderr)
-			_ = tfProc.Cmd.Wait()
+		if errors.Is(err, ErrTerraform) {
+			os.Exit(1)
+		} else if errors.Is(err, ErrNoChanges) {
+			os.Exit(0)
+		} else {
+			panic(err)
 		}
-		os.Exit(0)
-	} else if err != nil {
-		panic(err)
 	}
 
 	tree := newTreeView(root)
