@@ -108,6 +108,7 @@ func readTree(root *tview.TreeNode, in io.Reader) (string, error) {
 	parentStack.Push(root)
 
 	start := false
+	eot := false
 	scanner := bufio.NewScanner(in)
 	for scanner.Scan() {
 		coloredLine := scanner.Text()
@@ -124,6 +125,13 @@ func readTree(root *tview.TreeNode, in io.Reader) (string, error) {
 				continue
 			}
 		}
+
+		eotStart := isEotStart(rawLine)
+		eotEnd := isEotEnd(rawLine)
+		if eotEnd {
+			eot = false
+		}
+
 		if needsInput(rawLine) {
 			return rawLine, nil
 		}
@@ -133,15 +141,23 @@ func readTree(root *tview.TreeNode, in io.Reader) (string, error) {
 		parent.AddChild(node)
 		node.SetReference(parent)
 
-		opener := isOpener(rawLine)
-		closer := isCloser(rawLine)
-		node.SetSelectable(opener)
-		if opener {
-			node.SetSelectable(true)
-			parentStack.Push(node)
-			updateSuffix(node)
-		} else if closer {
-			parentStack.Pop()
+		if eot {
+			node.SetSelectable(false)
+		} else {
+			opener := isOpener(rawLine) || eotStart
+			closer := isCloser(rawLine) || eotEnd
+			node.SetSelectable(opener)
+			if opener {
+				node.SetSelectable(true)
+				parentStack.Push(node)
+				updateSuffix(node)
+			} else if closer {
+				parentStack.Pop()
+			}
+		}
+
+		if eotStart {
+			eot = true
 		}
 	}
 	if err := scanner.Err(); err != nil {
@@ -185,6 +201,14 @@ func isCloser(line string) bool {
 	}
 	firstChar := trimmedLine[0]
 	return firstChar == ')' || firstChar == ']' || firstChar == '}'
+}
+
+func isEotStart(line string) bool {
+	return strings.HasSuffix(line, "<<-EOT")
+}
+
+func isEotEnd(line string) bool {
+	return strings.TrimSpace(line) == "EOT"
 }
 
 func ansiColorToTview(line string) string {
