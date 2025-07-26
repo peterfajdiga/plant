@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math/rand"
 	"os"
+	"plant/dialog"
 	"plant/process"
 	"plant/stack"
 	"strings"
@@ -55,7 +55,15 @@ func main() {
 	promptAnswered := false
 	if promptMsg != "" {
 		if tfProc != nil {
-			setupInputDialog(app, tree, promptMsg, tfProc.Stdin, func() { promptAnswered = true })
+			dialogConfirm := func() {
+				promptAnswered = true
+				fmt.Fprintln(tfProc.Stdin, "yes")
+				app.Stop()
+			}
+			dialogCancel := func() {
+				app.SetRoot(tree, true)
+			}
+			setupInputDialog(app, tree, promptMsg, dialogConfirm, dialogCancel)
 		} else {
 			mustCopy(os.Stdout, in)
 			fmt.Fprintln(os.Stderr, "plant: Piping only works with `terraform plan | plant`. For apply or destroy run `plant terraform apply` or `plant terraform destroy`.")
@@ -237,42 +245,14 @@ func ansiColorToTview(line string) string {
 	return replacer.Replace(line)
 }
 
-func setupInputDialog(app *tview.Application, tree *tview.TreeView, promptMsg string, tfIn io.Writer, done func()) {
+func setupInputDialog(app *tview.Application, tree *tview.TreeView, promptMsg string, confirm, cancel func()) {
 	inputNode := newTreeNode(promptMsg).
 		SetSelectable(true).
 		SetSelectedFunc(func() {
-			modal := tview.NewModal().
-				SetText(promptMsg).
-				AddButtons(dialogButtons()).
-				SetDoneFunc(func(buttonIndex int, buttonLabel string) {
-					fmt.Fprintln(tfIn, buttonLabel)
-					done()
-					app.Stop()
-				})
-			modal.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-				if event.Key() == tcell.KeyEsc {
-					app.SetRoot(tree, true)
-					return nil
-				}
-				return event
-			})
+			modal := dialog.New(promptMsg, confirm, cancel)
 			app.SetRoot(modal, true)
 		})
 	tree.GetRoot().AddChild(inputNode)
-}
-
-func dialogButtons() []string {
-	const no = "no"
-	const yes = "yes"
-	buttons := []string{no, no, no, yes}
-	shuffleSlice(buttons[1:])
-	return buttons
-}
-
-func shuffleSlice[T any](slice []T) {
-	rand.Shuffle(len(slice), func(i, j int) {
-		slice[i], slice[j] = slice[j], slice[i]
-	})
 }
 
 func newTreeNode(text string) *tview.TreeNode {
