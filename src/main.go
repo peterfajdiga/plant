@@ -216,7 +216,8 @@ func isEotStart(line string) bool {
 }
 
 func isEotEnd(line string) bool {
-	return strings.TrimSpace(line) == "EOT"
+	trimmedLine := strings.TrimSpace(line)
+	return strings.HasPrefix(trimmedLine, "EOT")
 }
 
 func ansiColorToTview(line string) string {
